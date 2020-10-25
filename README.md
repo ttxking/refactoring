@@ -14,7 +14,8 @@ https://github.com/ttxking/PA4-flashget/blob/master/src/flashget/URLToFileHandle
 
 #### initialize() method
 
-In the `src/flashget/Controller.java` class  
+In the `src/flashget/Controller.java` class    
+https://github.com/ttxking/PA4-flashget/blob/master/src/flashget/Controller.java
 
 consider this code:
 ``` java
@@ -47,7 +48,8 @@ consider this code:
   
 
 #### Download() method
-In the `src/flashget/DownloadExecutor.java`
+In the `src/flashget/DownloadExecutor.java`    
+https://github.com/ttxking/PA4-flashget/blob/master/src/flashget/DownloadExecutor.java
 
 consider this code:
 ``` java
@@ -70,30 +72,33 @@ consider this code:
     * There is a usage of magic number
     * A method contains too many lines of code. The download method create listener, download tasks and update progress bar.
     This seems to be a lot of works.
-    * integer division in floating-point context
+    * Integer division in floating-point context
+    * Contains an anonymous new ChangeListener<>()
 
     
-* Refactoring: replace Magic Number with Symbolic Constant and remove math.ceil
-``` java
-        
-        static final long fiftyMB = 52_428_800
-        static final int minthread = 1
-        static final int maxthread = 2
-        static final long chunkSize = 4096 * 4;
-
-        public void Download(....)
-
-        if (length <= fiftyMB) { // less than 50 MB
-            threadUsed = minthread; // 1 thread
-        } else { // more than 50 mb
-            threadUsed = maxthread; // 5 thread
-        }
-
-        // size of each thread
-        long chunkNumber = (length / chunkSize));
-        size = (chunkNumber / threadUsed) * chunkSize;
-        
-```
+* Refactoring: replace Magic Number with Symbolic Constant 
+    ``` java
+            
+            static final long fiftyMB = 52_428_800
+            static final int minthread = 1
+            static final int maxthread = 2
+            static final long chunkSize = 4096 * 4;
+    
+            public void Download(....)
+    
+            if (length <= fiftyMB) { // less than 50 MB
+                threadUsed = minthread; // 1 thread
+            } else { // more than 50 mb
+                threadUsed = maxthread; // 5 thread
+            }         
+    ```
+  
+* Refactoring : Remove math.ceil from integer division
+    ``` java
+      // size of each thread
+              long chunkNumber = (length / chunkSize));
+              size = (chunkNumber / threadUsed) * chunkSize;
+    ```
 
 * Refactoring: Extract method
 
@@ -115,41 +120,22 @@ consider this code:
                 threadsLabel.setVisible(false);
             }
         }
+ 
     ```
-     * downloadTask method - create download task
-
-``` java
-    private void downloadTask(URL url, long length, File outputFile, ProgressBar[] progressBarArray, int threadUsed, ChangeListener<Long> changeListener, ChangeListener<String> statusListener) {
-            // create a executor service
-            ExecutorService executor = Executors.newFixedThreadPool(threadUsed);
+ * Refactoring: replace with lambda
+     ``` java
+            // update Label that shows byte downloaded
+            ChangeListener<Long> changeListener =
+                    (observable, oldValue, newValue) -> {
+                        if (oldValue == null) {
+                            oldValue = 0L; // in case the old value is null set in to zero
+                        }
+                        byteDownloaded += newValue - oldValue; // byte download on each thread
+                        downloadLabel.setText(String.format("%d/%d", byteDownloaded, length)); // update the label
+                    };
     
-            // create download task
-            for (int i = 0; i < threadUsed; i++) {
-    
-                if (i == threadUsed - 1) { // last thread
-                    task = new DownloadTask(url, outputFile, size * i, length - (size * i)); // last thread handle the rest
-                } else {
-                    task = new DownloadTask(url, outputFile, (size * i), size);
-                }
-    
-                tasklist.add(task);
-    
-                // add observer (ChangeListener) of the valueProperty
-                tasklist.get(i).valueProperty().addListener(changeListener);
-    
-                // add it observer (statusListener) of the messageProperty
-                tasklist.get(i).messageProperty().addListener(statusListener);
-    
-                // update the progress bar whenever the worker updates progress
-                progressBarArray[i].progressProperty().bind(tasklist.get(i).progressProperty());
-    
-                // Start executing the task
-                executor.execute(tasklist.get(i));
-    
-                System.out.println("Stating thread" + (i + 1));
-    
-            }
-    
-            executor.shutdown();
-        }
-```
+            // update Label that shows status value of downloader
+            ChangeListener<String> statusListener =
+                    (observable, oldValue, newValue) -> downloadLabel.setText(newValue);
+     ```
+     
