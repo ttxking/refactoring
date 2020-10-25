@@ -43,6 +43,7 @@ consider this code:
     
 * Refactoring: append all progressBar at once
     ``` java
+      ...
       ProgressBarArray = new ProgressBar[]{threadPB1,threadPB2,threadPB3,threadPB4,threadPB5};
     ```
   
@@ -67,6 +68,8 @@ consider this code:
          long chunkSize = 4096 * 4;
          long chunkNumber = (long) (Math.ceil(length / chunkSize));
          size = (chunkNumber / threadUsed) * chunkSize;
+    
+        ...
 ```
 * Refactoring Signs:
     * There is a usage of magic number
@@ -78,26 +81,31 @@ consider this code:
     
 * Refactoring: replace Magic Number with Symbolic Constant 
     ``` java
-            
+            ...
+  
             static final long fiftyMB = 52_428_800
             static final int minthread = 1
             static final int maxthread = 2
             static final long chunkSize = 4096 * 4;
     
             public void Download(....)
+            ...
     
             if (length <= fiftyMB) { // less than 50 MB
                 threadUsed = minthread; // 1 thread
             } else { // more than 50 mb
                 threadUsed = maxthread; // 5 thread
             }         
+            ...
     ```
   
 * Refactoring : Remove math.ceil from integer division
     ``` java
-      // size of each thread
+        ...
+        // size of each thread
               long chunkNumber = (length / chunkSize));
               size = (chunkNumber / threadUsed) * chunkSize;
+        ...
     ```
 
 * Refactoring: Extract method
@@ -124,6 +132,7 @@ consider this code:
     ```
  * Refactoring: replace with lambda
      ``` java
+            ...
             // update Label that shows byte downloaded
             ChangeListener<Long> changeListener =
                     (observable, oldValue, newValue) -> {
